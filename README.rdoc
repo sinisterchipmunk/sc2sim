@@ -1,0 +1,37 @@
+= sc2sim
+
+Attempts to simulate various aspects of StarCraft 2, such as worker mining rate.
+
+== Usage
+
+  require 'sc2sim'
+
+  game = SC2::Simulator.new(:zerg)
+  game.drones
+  #=> drones[6]
+
+  game.supply
+  #=> SC2::SupplyRatio<6/10>
+
+  game.income
+  #=> 360
+
+  game.minerals
+  #=> 50
+
+  game.drones.gather(:minerals)
+  game.wait(60.seconds)
+  game.minerals
+  #=> XXXX
+
+  game.build(:extractor)
+  #=> extractor<started at Time, completed at Time>
+
+  # build an extractor, then make 3 drones harvest gas,
+  # and see how much gas was harvested over 10 seconds
+  #
+  game.build(:extractor).and_wait
+  game.drones[0...3].gather(game.extractors.first)
+  game.wait(10.seconds)
+  game.vespene
+  #=> 60

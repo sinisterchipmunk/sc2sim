@@ -20,6 +20,10 @@ class SC2::GameObject
   end
 
   class << self
+    def base_name
+      name.split('::').last || ''
+    end
+
     def costs(minerals, gas = 0, supply = 0)
       define_method(:supply_consumed) { supply }
       define_method(:mineral_cost) { minerals }

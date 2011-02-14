@@ -1,6 +1,7 @@
 $:.unshift(File.dirname(__FILE__))
 
 module SC2
+  autoload :Inspection, "sc2sim/inspection"
   autoload :VERSION, "sc2sim/version"
   autoload :Simulator, "sc2sim/simulator"
   autoload :WorkerSet, "sc2sim/worker_set"

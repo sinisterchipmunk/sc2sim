@@ -1,5 +1,7 @@
 class SC2::Actions::Construction
-  attr_reader :simulator, :target
+  include SC2::Inspection
+  attr_reader :simulator, :target, :started_at, :completed_at
+  omits :simulator
 
   def initialize(game, what_to_build)
     @simulator = game

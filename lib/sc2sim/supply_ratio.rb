@@ -15,5 +15,9 @@ class SC2::SupplyRatio
     available - consumed
   end
 
+  def inspect
+    "#<SC2::SupplyRatio [#{consumed}/#{available}]>"
+  end
+
   alias used consumed
 end

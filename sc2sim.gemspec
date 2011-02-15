@@ -13,7 +13,10 @@ Gem::Specification.new do |s|
   s.description = %q{Attempts to simulate various aspects of StarCraft 2, such as worker mining rate.}
 
   s.rubyforge_project = "sc2sim"
+
   s.add_dependency "activesupport"
+
+  s.add_development_dependency "rink"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")

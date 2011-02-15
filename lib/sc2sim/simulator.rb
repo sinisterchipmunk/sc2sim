@@ -6,13 +6,13 @@ module SC2
     autoload :TerranMethods,  "sc2sim/simulator/terran_methods"
     autoload :ProtossMethods, "sc2sim/simulator/protoss_methods"
 
-    attr_reader :supply, :action_queue, :workers, :time, :minerals, :gas
+    attr_reader :supply, :actions, :workers, :time, :minerals, :gas
     alias vespene gas
 
     def initialize(race)
       @time = 0.seconds
       @supply = SC2::SupplyRatio.new(self)
-      @action_queue = SC2::ActionQueue.new
+      @actions = SC2::ActionQueue.new
       @minerals = 50
       @gas = 0
 
@@ -22,16 +22,19 @@ module SC2
     end
 
     def build(unit_or_structure)
-      action_queue.push(SC2::Actions::Construction.new(self, unit_or_structure)).last
+      actions.push(SC2::Actions::Construction.new(self, unit_or_structure)).last
     end
 
     # Waits until the specified object is affordable based on its mineral and vespene costs.
     def wait_until_affordable(object)
+      min_remaining = object.mineral_cost - minerals
+      gas_remaining = object.gas_cost - gas
+      
       # how long should we wait?
       min_per_second = income_per_second(:minerals)
       gas_per_second = income_per_second(:gas)
-      min_remaining = min_per_second != 0 && object.mineral_cost / min_per_second
-      gas_remaining = gas_per_second != 0 && object.gas_cost     / gas_per_second
+      min_remaining = min_per_second != 0 && min_remaining / min_per_second
+      gas_remaining = gas_per_second != 0 && gas_remaining / gas_per_second
 
       seconds_remaining = min_remaining && gas_remaining ? [min_remaining, gas_remaining].max : min_remaining || gas_remaining
       if seconds_remaining && seconds_remaining > 0
@@ -72,7 +75,7 @@ module SC2
     #
     # If type is given, only structures of that type will be returned.
     def structures(type = nil)
-      type ? action_queue.completed_structures.select { |c| c.kind_of?(type) } : action_queue.completed_structures
+      type ? actions.completed_structures.select { |c| c.kind_of?(type) } : actions.completed_structures
     end
 
     # Returns all units built up to the current moment in game time. Note that units that

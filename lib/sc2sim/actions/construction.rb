@@ -5,7 +5,7 @@ class SC2::Actions::Construction
 
   def initialize(game, what_to_build)
     @simulator = game
-    @target = game.action_queue.push(lookup_game_object(what_to_build)).last
+    @target = lookup_game_object(what_to_build)
 
     simulator.wait_until_affordable(target)
     @started_at = simulator.time

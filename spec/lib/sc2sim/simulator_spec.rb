@@ -24,10 +24,27 @@ describe SC2::Simulator do
       subject.supply.consumed.should == 6
     end
 
-    it "should build an extractor" do
-      subject.build(:extractor).and_wait
-      subject.extractors.length.should == 1
-      subject.extractors.first.should be_kind_of(SC2::Structures::Extractor)
+    context "building an affordable extractor" do
+      context "and waiting" do
+        before(:each) { subject.build(:extractor).and_wait }
+
+        it "should have one extractor" do
+          subject.extractors.length.should == 1
+          subject.extractors.first.should be_kind_of(SC2::Structures::Extractor)
+        end
+      end
+      
+      context "and not waiting" do
+        before(:each) { subject.build(:extractor) }
+
+        it "should not pass time" do
+          subject.time.should == 0.seconds
+        end
+        
+        it "should not have one extractor yet" do
+          subject.extractors.length.should == 0
+        end
+      end
     end
   end
 end

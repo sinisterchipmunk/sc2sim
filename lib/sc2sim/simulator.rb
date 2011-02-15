@@ -1,5 +1,3 @@
-require "active_support/core_ext"
-
 module SC2
   class Simulator
     autoload :ZergMethods,    "sc2sim/simulator/zerg_methods"

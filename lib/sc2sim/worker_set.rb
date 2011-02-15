@@ -1,13 +1,8 @@
 class SC2::WorkerSet < Array
-  # Average gas income per worker per second; defaults to 2
-  attr_accessor :gas_rate
-  # Average mineral income per worker per second; defaults to 1
-  attr_accessor :mineral_rate
-
+  include SC2::MetaData
+  
   def initialize(count, type)
     super()
-    @gas_rate = 2
-    @mineral_rate = 1
     count.times { push type.new }
   end
 
@@ -16,8 +11,13 @@ class SC2::WorkerSet < Array
   end
 
   def gas(seconds)
-    amount = seconds * gas_rate
-    inject(0) { |qty, worker| qty + (worker.gathering?(:gas) ? amount : 0) }
+    gas_sources.inject(0) do |qty, src|
+      qty + src.income_per_second * seconds
+    end 
+  end
+  
+  def gas_sources
+    select { |worker| worker.gathering?(:gas) }.collect { |worker| worker.gather_source }.uniq
   end
 
   def minerals(seconds)

@@ -19,10 +19,10 @@ Attempts to simulate various aspects of StarCraft 2, such as worker mining rate.
   game.minerals
   #=> 50
 
-  game.drones.gather(:minerals)
-  game.wait(60.seconds)
+  game.drones.gather :minerals
+  game.wait 60.seconds
   game.minerals
-  #=> XXXX
+  #=> 410
 
   game.build(:extractor)
   #=> extractor<started at Time, completed at Time>
@@ -31,7 +31,7 @@ Attempts to simulate various aspects of StarCraft 2, such as worker mining rate.
   # and see how much gas was harvested over 10 seconds
   #
   game.build(:extractor).and_wait
-  game.drones[0...3].gather(game.extractors.first)
-  game.wait(10.seconds)
+  game.drones[0...3].gather game.extractors.first
+  game.wait 10.seconds
   game.vespene
   #=> 60

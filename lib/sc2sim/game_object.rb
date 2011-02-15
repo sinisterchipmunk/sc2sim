@@ -1,6 +1,7 @@
 # Base class representing every object in the game. Contributes generic methods which could apply to both buildings
 # and units.
 class SC2::GameObject
+  include SC2::MetaData
   @@registry = {}
 
   def supply_consumed

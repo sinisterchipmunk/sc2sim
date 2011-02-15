@@ -1,3 +1,5 @@
+require "active_support/core_ext"
+
 $:.unshift(File.dirname(__FILE__))
 
 module SC2
@@ -11,6 +13,13 @@ module SC2
   autoload :Units, "sc2sim/units"
   autoload :Actions, "sc2sim/actions"
   autoload :ActionQueue, "sc2sim/action_queue"
+  autoload :Errors, "sc2sim/errors"
+  autoload :Data, "sc2sim/data"
+  autoload :MetaData, "sc2sim/data"
+  
+  def self.data
+    @data ||= SC2::Data.new
+  end
 end
 
 # eager load the units and structures

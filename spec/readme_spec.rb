@@ -1,8 +1,5 @@
 # Makes sure the examples in the README are valid ones.
 
-# Data sources:
-#  http://sc2armory.com/forums/topic/10550
-
 require 'spec_helper'
 
 describe "README examples" do

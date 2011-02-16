@@ -84,10 +84,21 @@ module SC2
 
     # Adds the specified duration to the game time, then updates things like minerals, completed build actions, etc.
     def wait(seconds)
-      @time += seconds
-      @minerals += workers.minerals(seconds)
-      @gas += workers.gas(seconds)
-      evaluate_action_queue
+      # is there a better way to do this, to remove the loop without losing precision?
+      seconds.times do
+        all_intervals.each do |interval|
+          timing = interval[0]
+          block = interval[1]
+          if (difference = (@time % timing) - ((@time+1) % timing)) > 0
+            difference.times { instance_eval(&block) }
+          end
+        end
+        
+        @time += 1
+        @minerals += workers.minerals(1)
+        @gas += workers.gas(1)
+        evaluate_action_queue
+      end
     end
 
     # Returns all units and structures.
@@ -102,7 +113,6 @@ module SC2
     def structures(type = nil)
       @structures ||= []
       type ? @structures.select { |c| c.kind_of?(type) } : @structures
-#      type ? actions.completed_structures.select { |c| c.kind_of?(type) } : actions.completed_structures
     end
 
     # Returns all units built up to the current moment in game time. Note that units that
@@ -113,6 +123,37 @@ module SC2
     
     def army
       @army ||= []
+    end
+    
+    # Registers a block to be called every X seconds of game time that elapse.
+    # The block is evaluated in the context of the simulator.
+    #
+    # Example:
+    # 
+    #   simulator.every 20.seconds do
+    #     build :drone
+    #   end
+    #
+    def every(how_often, &block)
+      intervals.push([how_often, block])
+    end
+    
+    def intervals
+      @intervals ||= []
+    end
+    
+    def all_intervals
+      intervals + self.class.intervals
+    end
+    
+    class << self
+      def intervals
+        @intervals ||= []
+      end
+      
+      def every(how_often, &block)
+        intervals.push([how_often, block])
+      end
     end
 
     private

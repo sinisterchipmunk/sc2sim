@@ -1,11 +1,15 @@
 module SC2::Simulator::ZergMethods
   def init_race
-    actions.push(SC2::Actions::Construction.new(self, :hatchery)).last.instantly!
-#    build(:hatchery).instantly!
+    structures.push SC2::Structures::Hatchery.new
+    3.times { army.push(SC2::Units::Larva.new) }
   end
 
   def drones
     workers
+  end
+  
+  def larvae
+    army.select { |a| a.kind_of?(SC2::Units::Larva) }
   end
 
   def hatcheries

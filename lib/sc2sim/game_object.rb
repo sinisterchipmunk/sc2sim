@@ -44,6 +44,10 @@ class SC2::GameObject
     def base_name
       name.split('::').last || ''
     end
+    
+    def every(how_often, &block)
+      SC2::Simulator.every(how_often, &block)
+    end
 
     def costs(minerals, gas = 0, supply = 0)
       define_method(:supply_consumed) { supply   }

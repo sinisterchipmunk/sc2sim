@@ -12,7 +12,7 @@ class SC2::Actions::Construction
     simulator.pay_for(target)
     
     @started_at = simulator.time
-    @completed_at = simulator.time + build_times[what_to_build]
+    @completed_at = simulator.time + target.build_time
   end
 
   def instantly!

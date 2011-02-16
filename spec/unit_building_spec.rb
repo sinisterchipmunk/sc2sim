@@ -13,5 +13,9 @@ describe "Unit construction" do
     it "should not allow building more drones" do
       proc { subject.build(:drone) }.should raise_error(SC2::Errors::SupplyLimitReached)
     end
+    
+    it "should gather minerals by default" do
+      subject.drones.each { |drone| drone.should be_gathering(:minerals) }
+    end
   end
 end

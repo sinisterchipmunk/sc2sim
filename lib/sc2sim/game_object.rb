@@ -19,6 +19,10 @@ class SC2::GameObject
   def supplies_produced
     supplies_produced
   end
+  
+  def build_time
+    0
+  end
 
   def mineral_cost
     0
@@ -45,6 +49,10 @@ class SC2::GameObject
       define_method(:supply_consumed) { supply   }
       define_method(:mineral_cost)    { minerals }
       define_method(:gas_cost)        { gas      }
+    end
+    
+    def build_time(time)
+      define_method(:build_time) { time }
     end
     
     def objects_produced

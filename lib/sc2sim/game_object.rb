@@ -11,6 +11,14 @@ class SC2::GameObject
   def supply_produced
     0
   end
+  
+  def supplies_consumed
+    supply_consumed
+  end
+  
+  def supplies_produced
+    supplies_produced
+  end
 
   def mineral_cost
     0
@@ -19,6 +27,14 @@ class SC2::GameObject
   def gas_cost
     0
   end
+  
+  def can_produce?(unit_or_structure)
+    self.class.objects_produced.include? unit_or_structure
+  end
+  
+  def produce(game, unit_or_structure)
+    game.add_action :Construction, unit_or_structure
+  end
 
   class << self
     def base_name
@@ -26,12 +42,21 @@ class SC2::GameObject
     end
 
     def costs(minerals, gas = 0, supply = 0)
-      define_method(:supply_consumed) { supply }
-      define_method(:mineral_cost) { minerals }
-      define_method(:gas_cost) { gas }
+      define_method(:supply_consumed) { supply   }
+      define_method(:mineral_cost)    { minerals }
+      define_method(:gas_cost)        { gas      }
+    end
+    
+    def objects_produced
+      @objects_produced ||= []
+    end
+    
+    def produces(*what)
+      objects_produced.push(what)
+      objects_produced.flatten!
     end
 
-    def produces(supply)
+    def supplies(supply)
       define_method(:supply_produced) { supply }
     end
 

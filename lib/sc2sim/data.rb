@@ -10,9 +10,18 @@ class SC2::Data
   # Average gas income per worker per second; defaults to 2
   attr_accessor :gas_rate
   
+  # A hash containing the time it takes to build each object in the game.
+  attr_reader :build_times
+  
   def initialize
     @mineral_rate = 1
     @gas_rate = 2
+    
+    @build_times = {
+      :extractor => 30.seconds,
+      :hatchery  => 30.seconds,
+      :drone     => 10.seconds
+    }
   end
 end
 

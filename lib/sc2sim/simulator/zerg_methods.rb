@@ -1,6 +1,7 @@
 module SC2::Simulator::ZergMethods
   def init_race
-    build(:hatchery).instantly!
+    actions.push(SC2::Actions::Construction.new(self, :hatchery)).last.instantly!
+#    build(:hatchery).instantly!
   end
 
   def drones

@@ -1,5 +1,6 @@
 class SC2::Actions::Construction
   include SC2::Inspection
+  include SC2::MetaData
   attr_reader :simulator, :target, :started_at, :completed_at
   omits :simulator
 
@@ -8,12 +9,15 @@ class SC2::Actions::Construction
     @target = lookup_game_object(what_to_build)
 
     simulator.wait_until_affordable(target)
+    simulator.pay_for(target)
+    
     @started_at = simulator.time
-    @completed_at = simulator.time + 30.seconds
+    @completed_at = simulator.time + build_times[what_to_build]
   end
 
   def instantly!
     @completed_at = @started_at
+    simulator.wait(0) # force to process the action queue
   end
 
   def completed?

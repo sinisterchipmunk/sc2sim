@@ -17,7 +17,7 @@ class SC2::GameObject
   end
   
   def supplies_produced
-    supplies_produced
+    supply_produced
   end
   
   def build_time

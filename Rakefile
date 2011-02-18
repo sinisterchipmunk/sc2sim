@@ -13,3 +13,16 @@ task :cli do
 
   CLI.new
 end
+
+gem "hanna"
+require "hanna/rdoctask"
+desc "Documentation"
+Rake::RDocTask.new :rdoc do |rd|
+  rd.rdoc_dir = "rdoc"
+  rd.title    = "SC2sim"
+  rd.options << "--line-numbers" << "--inline-source"
+  rd.options << "--charset" << "utf-8"
+  rd.main = "README.rdoc"
+  rd.rdoc_files.include("README.rdoc")
+  rd.rdoc_files.include("lib/**/*.rb")
+end

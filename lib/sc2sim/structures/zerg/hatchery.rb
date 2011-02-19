@@ -3,7 +3,8 @@ class SC2::Structures::Hatchery < SC2::Structures::Base
   supplies 10
   costs 300
   build_time 100.seconds
-  produces :larva
+  produces :queen
+#  produces :larva
   
   every 15.seconds do
     # we can't just build(:larva) because that sticks it in the action queue. Larvae spawn

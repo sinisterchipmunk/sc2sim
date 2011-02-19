@@ -23,4 +23,8 @@ module SC2::Simulator::ZergMethods
   def worker_type
     SC2::Units::Drone
   end
+  
+  def queens
+    units(SC2::Units::Queen)
+  end
 end

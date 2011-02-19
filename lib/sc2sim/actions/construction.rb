@@ -1,31 +1,26 @@
-class SC2::Actions::Construction
-  include SC2::Inspection
+class SC2::Actions::Construction < SC2::Actions::Base
   include SC2::MetaData
-  attr_reader :simulator, :target, :started_at, :completed_at
-  omits :simulator
+  attr_reader :target
 
   def initialize(game, what_to_build)
-    @simulator = game
     @target = lookup_game_object(what_to_build)
-
-    simulator.wait_until_affordable(target)
-    simulator.pay_for(target)
+    game.wait_until_affordable(target)
+    game.pay_for(target)
     
-    @started_at = simulator.time
-    @completed_at = simulator.time + target.build_time
+    super(game, target.build_time)
   end
 
-  def instantly!
-    @completed_at = @started_at
-    simulator.wait(0) # force to process the action queue
+  def trigger!
+    case target
+      when SC2::Structures::Base then @simulator.structures.push(target)
+      when SC2::Units::Worker    then @simulator.workers.push(target)
+      when SC2::Units::Base      then @simulator.army.push(target)
+      else raise ArgumentError, "Expected target to be a structure, worker unit or army unit. Got: #{target.inspect}"
+    end
   end
-
-  def completed?
-    simulator.time >= @completed_at
-  end
-
-  def and_wait
-    simulator.wait(@completed_at - simulator.time)
+  
+  def handle
+    target.handle
   end
 
   private
@@ -35,6 +30,6 @@ class SC2::Actions::Construction
         return type.new
       end
     end
-    raise ArgumentError, "Expected build type to be one of #{SC2::GameObject.registry.keys.inspect}"
+    raise ArgumentError, "Expected build type to be one of #{SC2::GameObject.registry.keys.inspect}, received #{what_to_build.inspect}"
   end
 end

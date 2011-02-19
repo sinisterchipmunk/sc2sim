@@ -10,9 +10,13 @@ class SC2::Data
   # Average gas income per worker per second; defaults to 2
   attr_accessor :gas_rate
   
+  # Maximum larvae per hatchery; defaults to 19
+  attr_accessor :max_larvae_per_hatchery
+  
   def initialize
     @mineral_rate = 1
     @gas_rate = 2
+    @max_larvae_per_hatchery = 19
   end
 end
 

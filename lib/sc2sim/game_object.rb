@@ -32,6 +32,10 @@ class SC2::GameObject
     0
   end
   
+  def handle
+    self.class.handle
+  end
+  
   def can_produce?(unit_or_structure)
     self.class.objects_produced.include? unit_or_structure
   end
@@ -72,8 +76,12 @@ class SC2::GameObject
       define_method(:supply_produced) { supply }
     end
 
-    def handle(symbol)
-      registry[symbol] = self
+    def handle(symbol = nil)
+      if symbol
+        @handle = symbol
+        registry[symbol] = self
+      end
+      @handle
     end
 
     def registry

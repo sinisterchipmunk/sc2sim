@@ -8,7 +8,11 @@ class SC2::SupplyRatio
   end
 
   def consumed
-    @simulator.everything.inject(0) { |qty, object| qty + object.supply_consumed }
+    @simulator.everything.inject(0) { |qty, object| qty + object.supply_consumed } + pending_supply_consumption
+  end
+  
+  def pending_supply_consumption                                                                               
+    @simulator.actions.inject(0) { |qty, action| qty + (action.respond_to?(:target) ? action.target.supply_consumed : 0) }
   end
 
   def remaining
@@ -20,7 +24,7 @@ class SC2::SupplyRatio
   end
   
   def available?
-    available > 0
+    remaining > 0
   end
 
   alias used consumed

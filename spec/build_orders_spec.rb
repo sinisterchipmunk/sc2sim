@@ -5,6 +5,29 @@
 require 'spec_helper'
 
 describe "Build order:" do
+  describe "5 Roach Rush with Fast Expand" do
+    game = SC2::Simulator.new(:zerg) do
+      3.times { build :drone }
+      build :overlord
+      6.times { build :drone }
+      build :spawning_pool
+      2.times { build :drone }
+      build :hatchery
+      build :extractor
+      build :drone
+      build :zerglings
+      build :roach_warren
+      build :overlord
+      wait_for(:extractor)
+      drones[0..2].gather(extractors.first)
+      build :drone
+      4.times { build :roach }
+      build :drone
+      build :roach
+      wait_for(:everything)
+    end
+  end
+  
   describe "Roach Expand" do
     game = SC2::Simulator.new(:zerg) do
       3.times { build(:drone) }
@@ -17,7 +40,8 @@ describe "Build order:" do
       build :spawning_pool # at 15/18
       build :drone
       build :drone
-      build :extractor     # at 16/18
+      build(:extractor)    # at 16/18
+      drones[0..2].gather(extractors.first)
       build :drone
       build :overlord      # at 16/18
       wait_for :spawning_pool
@@ -28,14 +52,11 @@ describe "Build order:" do
       build :roach_warren
       build :drone
       wait_for :queen
-      cast :spawn_larvae  # at 22/34
+      cast :spawn_larvae   # at 22/34
       wait_for :spawn_larvae
       7.times { build(:roach) }
-      
+      # bringing us to 34/34. OL spawn for 34/42.
       wait
-      puts inspect
     end
-    
-    puts game.time
   end
 end

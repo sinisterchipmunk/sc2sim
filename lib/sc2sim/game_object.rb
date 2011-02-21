@@ -54,9 +54,22 @@ class SC2::GameObject
     end
 
     def costs(minerals, gas = 0, supply = 0)
+      @costs = { :minerals => minerals, :gas => gas, :supply => supply }
       define_method(:supply_consumed) { supply   }
       define_method(:mineral_cost)    { minerals }
       define_method(:gas_cost)        { gas      }
+    end
+    
+    def supply_consumed
+      (@costs || {})[:supply]
+    end
+    
+    def mineral_cost
+      (@costs || {})[:minerals]
+    end
+    
+    def gas_cost
+      (@costs || {})[:gas]
     end
     
     def build_time(time)

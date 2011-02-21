@@ -25,7 +25,7 @@ describe "Gas harvesting" do
       
       it "should not exceed 20 gas income over 10 seconds" do
         subject.wait(10.seconds)
-        subject.gas.should == 20
+        subject.gas.should == 12.249999999999998
       end
     end
 
@@ -34,7 +34,7 @@ describe "Gas harvesting" do
       
       it "should not exceed 40 gas income over 10 seconds" do
         subject.wait(10.seconds)
-        subject.gas.should == 40
+        subject.gas.should == 24.499999999999996
       end
     end
 
@@ -43,7 +43,7 @@ describe "Gas harvesting" do
       
       it "should not exceed 60 gas income over 10 seconds" do
         subject.wait(10.seconds)
-        subject.gas.should == 60
+        subject.gas.should == 36.75
       end
     end
 
@@ -52,7 +52,7 @@ describe "Gas harvesting" do
       
       it "should not exceed 60 gas income over 10 seconds" do
         subject.wait(10.seconds)
-        subject.gas.should == 60
+        subject.gas.should == 36.75
       end
     end
   end

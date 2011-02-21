@@ -9,7 +9,7 @@ module SC2::Simulator::ZergMethods
   end
   
   def larvae
-    army.select { |a| a.kind_of?(SC2::Units::Larva) }
+    army(SC2::Units::Larva)
   end
 
   def hatcheries
@@ -17,7 +17,11 @@ module SC2::Simulator::ZergMethods
   end
 
   def extractors
-    structures.select { |c| c.kind_of?(SC2::Structures::Extractor) }
+    structures(SC2::Structures::Extractor) + actions.select { |c| c.target.kind_of?(SC2::Structures::Extractor) }
+  end
+  
+  def overlords
+    army(SC2::Units::Overlord)
   end
 
   def worker_type

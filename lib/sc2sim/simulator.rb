@@ -4,7 +4,7 @@ module SC2
     autoload :TerranMethods,  "sc2sim/simulator/terran_methods"
     autoload :ProtossMethods, "sc2sim/simulator/protoss_methods"
 
-    attr_reader :supply, :actions, :workers, :time, :minerals, :gas
+    attr_reader :supply, :actions, :workers, :time, :minerals, :gas, :build_queue
     attr_writer :minerals, :gas
     alias supplies supply
     alias vespene gas
@@ -15,6 +15,7 @@ module SC2
       @actions = SC2::ActionQueue.new
       @minerals = 50
       @gas = 0
+      @build_queue = []
 
       set_race(race)
       init_workers
@@ -23,12 +24,20 @@ module SC2
       instance_eval &block if block_given?
     end
 
-    def build(unit_or_structure, options = {})
+    def build(unit_or_structure)
       everything.each do |object|
         if object.can_produce?(unit_or_structure)
           return object.produce(self, unit_or_structure)
         end
       end
+      
+      # we need to wait a while because the production unit or structure may be en route,
+      # even though it's not in any visible queue. Example: larva spawn or maxed-out barracks.
+      
+      wait(1.second) and build(unit_or_structure)
+      #build_queue.push(unit_or_structure)
+    rescue SystemStackError
+      # this can happen when wait(1.second), above, happens infinitely.
       raise ArgumentError, "Couldn't find any suitable candidate to build #{unit_or_structure.inspect}"
     end
     
@@ -38,14 +47,14 @@ module SC2
     
     # Checks if anything in production will eventually add to the supply limit, and then waits for it
     # to complete. If nothing in the action queue will do this, an error is raised.
-    def wait_for_supply
+    def wait_for_supply(qty = 1)
       return if supplies.available?
       actions.each do |action|
-        if action.target.supplies_produced > 0
-          return action.and_wait!
+        if action.target.supplies_produced >= qty
+          return action.and_wait
         end
       end
-      raise SC2::Errors::SupplyUnavailable, "Told to wait for supply, but more supply is not coming"
+#      raise SC2::Errors::SupplyUnavailable, "Told to wait for supply, but more supply is not coming"
     end
     
     # Attempts to cast the specified spell. If no appropriate spellcasters exist, an error will be raised.
@@ -60,15 +69,26 @@ module SC2
     
     # Waits for construction of the specified unit or structure to be finished. If the item is not currently
     # in the action queue, an error is raised.
+    #
+    # Special values:
+    #   :supplies   => equivalent to calling #wait_for_supplies
+    #   :everything => will wait for all action and build queues to become empty.
     def wait_for(unit_or_structure)
-      actions.each do |action|
-        if action.handle == unit_or_structure
-          return action.and_wait
-        end
-      end
-      # action not found, but perhaps it already completed??
-      if everything.select { |u| u.handle == unit_or_structure }.empty?
-        raise SC2::Errors::NotInQueue, "Told to wait for #{unit_or_structure.inspect}, but it is not in the action queue"
+      case unit_or_structure
+        when :supplies
+          wait_for_supplies
+        when :everything
+          wait(1.second) while !actions.empty? || !build_queue.empty?
+        else
+          actions.each do |action|
+            if action.handle == unit_or_structure
+              return action.and_wait
+            end
+          end
+          # action not found, but perhaps it already completed??
+          if everything.select { |u| u.handle == unit_or_structure }.empty?
+            raise SC2::Errors::NotInQueue, "Told to wait for #{unit_or_structure.inspect}, but it is not in the action queue"
+          end
       end
     end
     
@@ -77,6 +97,7 @@ module SC2
     #
     # Note that this method does not actually add the object to #structures or #units.
     def pay_for(game_object)
+      wait_for_supply(game_object.supply_consumed)
       if game_object.supplies_consumed > 0 && game_object.supplies_consumed > supplies.remaining
         raise SC2::Errors::SupplyLimitReached, "#{game_object} requires #{game_object.supplies_consumed} (#{supplies.inspect})"
       end
@@ -88,16 +109,27 @@ module SC2
     def wait_until_affordable(object)
       min_remaining = object.mineral_cost - minerals
       gas_remaining = object.gas_cost - gas
-      
-      # how long should we wait?
       min_per_second = income_per_second(:minerals)
       gas_per_second = income_per_second(:gas)
-      min_remaining = min_per_second != 0 && min_remaining / min_per_second
-      gas_remaining = gas_per_second != 0 && gas_remaining / gas_per_second
-
-      seconds_remaining = min_remaining && gas_remaining ? [min_remaining, gas_remaining].max : min_remaining || gas_remaining
-      if seconds_remaining && seconds_remaining > 0
-        wait(seconds_remaining)
+      
+      if min_remaining != 0 && min_per_second == 0
+        raise ArgumentError, "Waiting for minerals, but minerals aren't being gathered"
+      end
+      
+      if gas_remaining != 0 && gas_per_second == 0
+        raise ArgumentError, "Waiting for gas, but gas isn't being gathered"
+      end
+      
+      min_remaining /= min_per_second if min_per_second != 0
+      gas_remaining /= gas_per_second if gas_per_second != 0
+      
+      if min_remaining > 0 && min_remaining > gas_remaining
+        wait(min_remaining.to_i+1)
+        # because the build queue, which is evaluated during #wait, may have gone and spent all the resources
+        # we were saving up.
+        wait_until_affordable(object)
+      elsif gas_remaining > 0
+        wait(gas_remaining.to_i+1)
         # because the build queue, which is evaluated during #wait, may have gone and spent all the resources
         # we were saving up.
         wait_until_affordable(object)
@@ -141,10 +173,13 @@ module SC2
           @minerals += workers.minerals(1)
           @gas += workers.gas(1)
           spellcasters.each { |sp| sp.recharge(1) }
+          build_queue.length.times do
+            build(build_queue.shift)
+          end
           evaluate_action_queue
         end
       else
-        wait(1.second) while !actions.empty?
+        wait(1.second) while !actions.empty? || !build_queue.empty?
       end
     end
 

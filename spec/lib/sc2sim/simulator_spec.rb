@@ -41,8 +41,9 @@ describe SC2::Simulator do
           subject.time.should == 0.seconds
         end
         
-        it "should not have one extractor yet" do
-          subject.extractors.length.should == 0
+        it "should not have completed" do
+          subject.actions.first.completed?.should be_false
+#          subject.extractors.length.should == 0
         end
       end
     end

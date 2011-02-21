@@ -1,6 +1,10 @@
 class SC2::Actions::Construction < SC2::Actions::Base
   include SC2::MetaData
   attr_reader :target
+  
+  def inspect
+    "#<#{target.class.base_name} @ #{started_at.inspect} until #{completed_at.inspect}>"
+  end
 
   def initialize(game, what_to_build)
     @target = lookup_game_object(what_to_build)

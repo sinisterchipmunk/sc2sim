@@ -7,6 +7,9 @@ class SC2::Units::Worker < SC2::Units::Base
     if what.respond_to?(:mineral_type) && what.mineral_type == :gas
       @gathering = what
       @gathering.workers.push(self)
+    elsif what.kind_of?(SC2::Actions::Base) && what.target.respond_to?(:mineral_type) && what.target.mineral_type == :gas
+      @gathering = what
+      @gathering.target.workers.push(self)
     else
       case what
         when :minerals
@@ -23,22 +26,25 @@ class SC2::Units::Worker < SC2::Units::Base
     case @gathering
       when SC2::Structures::GasSource
         @gathering.workers.delete(self)
+      when SC2::Actions::Base
+        @gathering.target.workers.delete(self)
     end
     @gathering = nil
   end
   
   def gather_source
+    @gathering = @gathering.target if @gathering.respond_to?(:completed?) && @gathering.completed?
     @gathering
   end
 
   def gathering?(what = nil)
     case what
       when :minerals
-        @gathering == :minerals
+        gather_source == :minerals
       when :gas
-        @gathering == :gas || (@gathering.respond_to?(:mineral_type) && @gathering.mineral_type == :gas)
+        gather_source == :gas || (gather_source.respond_to?(:mineral_type) && gather_source.mineral_type == :gas)
       when nil
-        !!@gathering
+        !!gather_source
       else
         false
     end

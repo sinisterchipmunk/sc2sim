@@ -4,7 +4,7 @@ module SC2
     autoload :TerranMethods,  "sc2sim/simulator/terran_methods"
     autoload :ProtossMethods, "sc2sim/simulator/protoss_methods"
 
-    attr_reader :supply, :actions, :workers, :time, :minerals, :gas, :build_queue
+    attr_reader :supply, :actions, :workers, :time, :minerals, :gas
     attr_writer :minerals, :gas
     alias supplies supply
     alias vespene gas
@@ -15,8 +15,7 @@ module SC2
       @actions = SC2::ActionQueue.new
       @minerals = 50
       @gas = 0
-      @build_queue = []
-
+      
       set_race(race)
       init_workers
       init_race if respond_to?(:init_race)
@@ -33,12 +32,18 @@ module SC2
       
       # we need to wait a while because the production unit or structure may be en route,
       # even though it's not in any visible queue. Example: larva spawn or maxed-out barracks.
-      
-      wait(1.second) and build(unit_or_structure)
-      #build_queue.push(unit_or_structure)
+      wait 1.second and build unit_or_structure
     rescue SystemStackError
       # this can happen when wait(1.second), above, happens infinitely.
       raise ArgumentError, "Couldn't find any suitable candidate to build #{unit_or_structure.inspect}"
+    end
+    
+    # Returns true if the specified unit or structure is under construction or is in the build queue.
+    def building?(unit_or_structure)
+      actions.each do |action|
+        return action if action.respond_to?(:target) && action.target.class.handle == unit_or_structure
+      end
+      return false
     end
     
     def add_action(type, unit_or_structure)
@@ -48,13 +53,21 @@ module SC2
     # Checks if anything in production will eventually add to the supply limit, and then waits for it
     # to complete. If nothing in the action queue will do this, an error is raised.
     def wait_for_supply(qty = 1)
-      return if supplies.available?
+      return if supplies.remaining >= qty
+      expected = supplies.remaining
       actions.each do |action|
-        if action.target.supplies_produced >= qty
+        expected += action.target.supplies_produced
+        if expected >= qty
           return action.and_wait
         end
       end
 #      raise SC2::Errors::SupplyUnavailable, "Told to wait for supply, but more supply is not coming"
+    end
+    
+    # Returns true if any workers are gathering the requested resource (:minerals, :gas, or a specific
+    # extractor, assimilator or refinery)
+    def gathering?(what)
+      workers.gathering?(what)
     end
     
     # Attempts to cast the specified spell. If no appropriate spellcasters exist, an error will be raised.
@@ -76,9 +89,9 @@ module SC2
     def wait_for(unit_or_structure)
       case unit_or_structure
         when :supplies
-          wait_for_supplies
+          wait_for_supply
         when :everything
-          wait(1.second) while !actions.empty? || !build_queue.empty?
+          wait(1.second) while !actions.empty?
         else
           actions.each do |action|
             if action.handle == unit_or_structure
@@ -169,17 +182,14 @@ module SC2
             end
           end
           
-          @time += 1
-          @minerals += workers.minerals(1)
-          @gas += workers.gas(1)
-          spellcasters.each { |sp| sp.recharge(1) }
-          build_queue.length.times do
-            build(build_queue.shift)
-          end
+          @time += 1.second
+          @minerals += workers.minerals(1.second)
+          @gas += workers.gas(1.second)
+          spellcasters.each { |sp| sp.recharge(1.second) }
           evaluate_action_queue
         end
       else
-        wait(1.second) while !actions.empty? || !build_queue.empty?
+        wait(1.second) while !actions.empty?
       end
     end
 
@@ -264,10 +274,15 @@ module SC2
     # in the queue cannot be processed, none of them are.
     def evaluate_action_queue
       return if actions.empty?
-      if actions.first.completed?
-        actions.shift.trigger!
-        evaluate_action_queue
-      end
+      
+      # it's an error to assume the first action will complete before the second. If it
+      # has a long enough build time, it'll complete after.
+      actions.each { |action| action.completed? && actions.delete(action).trigger! }
+
+#      if actions.first.completed?
+#        actions.shift.trigger!
+#        evaluate_action_queue
+#      end
     end
     
     def init_workers

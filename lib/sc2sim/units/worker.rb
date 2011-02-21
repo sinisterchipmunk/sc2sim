@@ -22,14 +22,23 @@ class SC2::Units::Worker < SC2::Units::Base
     end
   end
   
-  def stop_gathering
+  def stop_gathering(what = nil)
     case @gathering
       when SC2::Structures::GasSource
-        @gathering.workers.delete(self)
+        if what == :gas || what == @gathering || what.nil?
+          @gathering.workers.delete(self)
+          @gathering = nil
+        end
       when SC2::Actions::Base
-        @gathering.target.workers.delete(self)
+        if what == :gas || what == @gathering || what.nil?
+          @gathering.target.workers.delete(self)
+          @gathering = nil
+        end
+      when :minerals
+        if what == :minerals || what.nil?
+          @gathering = nil
+        end
     end
-    @gathering = nil
   end
   
   def gather_source

@@ -5,6 +5,10 @@ class SC2::WorkerSet < Array
     super()
     count.times { push type.new }
   end
+  
+  def stop_gathering(what = nil)
+    each { |worker| worker.stop_gathering(what) }
+  end
 
   def gather(what)
     each { |worker| worker.gather(what) }
@@ -23,5 +27,11 @@ class SC2::WorkerSet < Array
   def minerals(seconds)
     amount = seconds * mineral_rate
     inject(0) { |qty, worker| qty + (worker.gathering?(:minerals) ? amount : 0) }
+  end
+
+  # Returns true if any workers are gathering the requested resource (:minerals, :gas, or a specific
+  # extractor, assimilator or refinery)
+  def gathering?(what)
+    !select { |worker| worker.gathering?(what) }.empty?
   end
 end

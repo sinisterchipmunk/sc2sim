@@ -1,8 +1,11 @@
 require "active_support/core_ext"
 
 $:.unshift(File.dirname(__FILE__))
+require File.join(File.dirname(__FILE__), "core_ext/fixnum")
 
 module SC2
+  autoload :BuildOrder, "sc2sim/build_order"
+  autoload :Adjectives, "sc2sim/adjectives"
   autoload :Inspection, "sc2sim/inspection"
   autoload :VERSION, "sc2sim/version"
   autoload :Simulator, "sc2sim/simulator"

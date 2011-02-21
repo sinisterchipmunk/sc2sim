@@ -5,6 +5,27 @@
 require 'spec_helper'
 
 describe "Build order:" do
+  it "Fastest 6 zergling rush" do
+    # This order was optimized by Evolution Chamber. I'm using it
+    # to test timing similarities. EC reports 2:34 but my timings
+    # may not be identical so we'll give a +/- 10 second margin
+    # of error.
+    
+    game = SC2::Simulator.new(:zerg) do
+      build :drone
+      build :spawning_pool
+      build :drone
+      build :drone
+      build :drone
+      build :overlord
+      3.times { build :zerglings }
+      wait_for :everything
+    end
+
+    game.time.should be > 144
+    game.time.should be < 164
+  end
+  
   describe "5 Roach Rush with Fast Expand" do
     game = SC2::Simulator.new(:zerg) do
       3.times { build :drone }
@@ -25,6 +46,27 @@ describe "Build order:" do
       build :drone
       build :roach
       wait_for(:everything)
+    end
+  end
+  
+  describe "5rr" do
+    game = SC2::BuildOrder.new(:zerg) do
+      at 9, :overlord
+      at 13, :spawning_pool
+      at 12, :extractor
+      at(:extractor) { drones[0..2].gather extractors.last }
+      at 15, :overlord
+      at 15, :queen
+      at(15) { build :zerglings; build :drone; build :drone }
+      #at 100.gas, :speedlings
+      at 75.percent(:queen), :roach_warren
+      at(:queen) { cast :spawn_larvae }
+      at :queen, :overlord
+      wait_for :roach_warren
+      5.times { build :roach }
+
+      wait
+#      p self
     end
   end
   

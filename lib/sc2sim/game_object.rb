@@ -72,8 +72,12 @@ class SC2::GameObject
       (@costs || {})[:gas]
     end
     
-    def build_time(time)
-      define_method(:build_time) { time }
+    def build_time(time = nil)
+      if time
+        @build_time = time
+        define_method(:build_time) { time }
+      end
+      @build_time
     end
     
     def objects_produced

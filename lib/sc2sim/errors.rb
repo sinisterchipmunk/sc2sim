@@ -26,4 +26,8 @@ module SC2::Errors
   # Raised when attempting to cast a spell without the appropriate spellcaster.
   class MissingSpellcaster < SC2::Errors::StandardError
   end
+  
+  # Raised when waiting for a condition that can't be met.
+  class ImpossibleCondition < SC2::Errors::StandardError
+  end
 end

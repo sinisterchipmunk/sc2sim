@@ -1,10 +1,11 @@
 class SC2::Actions::Base
   include SC2::Inspection
-  attr_reader :simulator, :started_at, :completed_at
+  attr_reader :simulator, :started_at, :completed_at, :producer
   omits :simulator
   
-  def initialize(game, duration)
+  def initialize(game, duration, producer)
     @simulator = game
+    @producer = producer
 
     @started_at = simulator.time
     @completed_at = simulator.time + duration
@@ -25,5 +26,9 @@ class SC2::Actions::Base
   
   def trigger!
     raise ArgumentError, "Expected subclass to override #trigger! but apparently that didn't happen"
+  end
+  
+  def cancel
+    producer.cancel(self)
   end
 end

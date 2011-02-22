@@ -11,12 +11,12 @@ describe "README examples" do
         # 1 mineral per sec * 6 drones * 60 seconds + 50 starting mins = 410
         subject.drones.gather(:minerals)
         subject.wait(60.seconds)
-        subject.minerals.should == 477.2120000000005
+        subject.minerals.should == 289.9997600000003
       end
     end
 
     it "should have initial income 360" do
-      subject.income.should == 427.212
+      subject.income.should == 239.99975999999998
     end
 
     it "should have initial minerals 50" do
@@ -28,7 +28,7 @@ describe "README examples" do
         subject.build(:extractor).and_wait
         subject.drones[0...3].gather(subject.extractors.first)
         subject.wait(10.seconds)
-        subject.vespene.should == 36.75
+        subject.vespene.should == 18.999990000000007
       end
     end
   end

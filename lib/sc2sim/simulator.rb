@@ -3,8 +3,11 @@ module SC2
     autoload :ZergMethods,    "sc2sim/simulator/zerg_methods"
     autoload :TerranMethods,  "sc2sim/simulator/terran_methods"
     autoload :ProtossMethods, "sc2sim/simulator/protoss_methods"
+    
+    include SC2::Inspection
+    omits :completed_actions
 
-    attr_reader :supply, :actions, :workers, :time, :minerals, :gas
+    attr_reader :supply, :actions, :workers, :time, :minerals, :gas, :completed_actions, :upgrades
     attr_writer :minerals, :gas
     alias supplies supply
     alias vespene gas
@@ -15,6 +18,8 @@ module SC2
       @actions = SC2::ActionQueue.new
       @minerals = 50
       @gas = 0
+      @completed_actions = []
+      @upgrades = []
       
       set_race(race)
       init_workers
@@ -35,7 +40,7 @@ module SC2
       wait 1.second and build unit_or_structure
     rescue SystemStackError
       # this can happen when wait(1.second), above, happens infinitely.
-      raise ArgumentError, "Couldn't find any suitable candidate to build #{unit_or_structure.inspect}"
+      raise ArgumentError, "Couldn't find any suitable candidate to build #{unit_or_structure.inspect}", caller.uniq
     end
     
     # Returns true if the specified unit or structure is under construction or is in the build queue.
@@ -46,8 +51,8 @@ module SC2
       return false
     end
     
-    def add_action(type, unit_or_structure)
-      actions.push(SC2::Actions.const_get(type).new(self, unit_or_structure)).last
+    def add_action(type, unit_or_structure, producer)
+      actions.push(SC2::Actions.const_get(type).new(self, unit_or_structure, producer)).last
     end
     
     # Checks if anything in production will eventually add to the supply limit, and then waits for it
@@ -56,7 +61,7 @@ module SC2
       return if supplies.remaining >= qty
       expected = supplies.remaining
       actions.each do |action|
-        expected += action.target.supplies_produced
+        expected += action.target.supplies_produced if action.respond_to?(:target)
         if expected >= qty
           return action.and_wait
         end
@@ -125,11 +130,11 @@ module SC2
       min_per_second = income_per_second(:minerals)
       gas_per_second = income_per_second(:gas)
       
-      if min_remaining != 0 && min_per_second == 0
+      if min_remaining > 0 && min_per_second == 0
         raise ArgumentError, "Waiting for minerals, but minerals aren't being gathered"
       end
       
-      if gas_remaining != 0 && gas_per_second == 0
+      if gas_remaining > 0 && gas_per_second == 0
         raise ArgumentError, "Waiting for gas, but gas isn't being gathered"
       end
       
@@ -171,8 +176,10 @@ module SC2
     # "macroing up" and then sitting and waiting for all units to stop moving, all building to cease, etc. Not usually
     # ideal.
     def wait(seconds = nil)
-      # is there a better way to do this, to remove the loop without losing precision?
-      if seconds
+      if seconds && seconds == 0
+        evaluate_action_queue
+      elsif seconds && seconds > 0
+      # is there a better way to do this, in order to remove the loop without losing precision?
         seconds.times do
           all_intervals.each do |interval|
             timing = interval[0]
@@ -236,6 +243,19 @@ module SC2
       type ? @army.select { |c| c.kind_of?(type) } : @army
     end
     
+    # Cancels the specified unit or structure in production. If the action
+    # has already completed (and therefore no actions match), this will raise
+    # an error. Note that if there are multiple copies of a given action,
+    # the *last* one will be canceled.
+    def cancel(unit_or_structure)
+      actions.reverse.each do |action|
+        if action.respond_to?(:target) && action.target.class.handle == unit_or_structure
+          return action.cancel
+        end
+      end
+      raise SC2::Errors::NotInQueue, "No build order for #{unit_or_structure} to cancel"
+    end
+    
     # Registers a block to be called every X seconds of game time that elapse.
     # The block is evaluated in the context of the simulator.
     #
@@ -277,7 +297,12 @@ module SC2
       
       # it's an error to assume the first action will complete before the second. If it
       # has a long enough build time, it'll complete after.
-      actions.each { |action| action.completed? && actions.delete(action).trigger! }
+      actions.each do |action|
+        if action.completed?
+          completed_actions.push(action)
+          actions.delete(action).trigger!
+        end
+      end
 
 #      if actions.first.completed?
 #        actions.shift.trigger!

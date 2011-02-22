@@ -1,104 +1,89 @@
-# Build orders, which was the whole reason I started this gem.
-# Each of these tests simply runs a build order, and is
-# considered to have passed if no errors are raised.
-#
 require 'spec_helper'
 
 describe "Build order:" do
-  it "Fastest 6 zergling rush" do
-    # This order was optimized by Evolution Chamber. I'm using it
-    # to test timing similarities. EC reports 2:34 but my timings
-    # may not be identical so we'll give a +/- 10 second margin
-    # of error.
+  context "optimized by Evolution Chamber" do
+    # These orders were optimized by Evolution Chamber. I'm using them
+    # to test timing similarities. My timings may not be identical so
+    # we'll give it +/- 10 seconds.
     
-    game = SC2::Simulator.new(:zerg) do
-      build :drone
-      build :spawning_pool
-      build :drone
-      build :drone
-      build :drone
-      build :overlord
-      3.times { build :zerglings }
-      wait_for :everything
+    it "6 zerglings" do
+      game = SC2::BuildOrder.new(:zerg) do
+        at 7, :spawning_pool
+        at 9, :overlord
+        3.times { build :zerglings }
+        wait_for :everything
+      end
+      
+      game.time.should be > 144
+      game.time.should be < 154
     end
-
-    game.time.should be > 144
-    game.time.should be < 164
+    
+    it "5 roaches" do
+      game = SC2::BuildOrder.new(:zerg) do
+        at 8, :spawning_pool
+        at 10, :extractor_trick
+        at 11, :overlord
+        at 11, :roach_warren
+        at 11, :extractor
+        at 12, :overlord
+        at(12) { drones[0..1].gather(extractors.last) }
+        at 12, :overlord
+        at 12, :roach
+        at(14) { drones[2].gather(extractors.last) }
+        at 14, :roach
+        at 16, :roach
+        at 18, :roach
+        at 20, :roach
+        
+        wait_for :everything
+      end
+      
+      game.time.should be > 271
+      game.time.should be < 291
+    end
   end
   
-  describe "5 Roach Rush with Fast Expand" do
-    game = SC2::Simulator.new(:zerg) do
-      3.times { build :drone }
-      build :overlord
-      6.times { build :drone }
-      build :spawning_pool
-      2.times { build :drone }
-      build :hatchery
-      build :extractor
-      build :drone
-      build :zerglings
-      build :roach_warren
-      build :overlord
-      wait_for(:extractor)
-      drones[0..2].gather(extractors.first)
-      build :drone
-      4.times { build :roach }
-      build :drone
-      build :roach
-      wait_for(:everything)
-    end
-  end
-  
-  describe "5rr" do
+  it "5 Roach Rush Expand" do
     game = SC2::BuildOrder.new(:zerg) do
-      at 9, :overlord
-      at 13, :spawning_pool
+      at 10, :overlord
+      at 11, :spawning_pool
       at 12, :extractor
       at(:extractor) { drones[0..2].gather extractors.last }
-      at 15, :overlord
+      at 14, :zerglings
       at 15, :queen
-      at(15) { build :zerglings; build :drone; build :drone }
-      #at 100.gas, :speedlings
-      at 75.percent(:queen), :roach_warren
-      at(:queen) { cast :spawn_larvae }
-      at :queen, :overlord
-      wait_for :roach_warren
-      5.times { build :roach }
-
-      wait
-#      p self
+      at 18, :roach_warren
+      at :queen, :cast => :spawn_larvae
+      at 100.gas, :metabolic_boost
+      at(125.gas) { drones.gather :minerals }
+      at 18, :overlord
+      at 19, :overlord
+      at(19) { 5.times { build :roach } }
+      at 29, :hatchery
+      
+      wait_for :roach while building? :roach
     end
+
+#    p game
   end
   
-  describe "Roach Expand" do
-    game = SC2::Simulator.new(:zerg) do
-      3.times { build(:drone) }
-      build :overlord # at 9/10
-      build :drone
-      # scout with drone.
-      # At this point we're supply blocked with an OL on the way, so...
-      wait_for_supply
-      5.times { build :drone }
-      build :spawning_pool # at 15/18
-      build :drone
-      build :drone
-      build(:extractor)    # at 16/18
-      drones[0..2].gather(extractors.first)
-      build :drone
-      build :overlord      # at 16/18
-      wait_for :spawning_pool
-      build :queen
-      build :queen
-      build :overlord
-      build :overlord
-      build :roach_warren
-      build :drone
-      wait_for :queen
-      cast :spawn_larvae   # at 22/34
-      wait_for :spawn_larvae
-      7.times { build(:roach) }
-      # bringing us to 34/34. OL spawn for 34/42.
-      wait
+
+  it "Roach Expand" do
+    game = SC2::BuildOrder.new(:zerg) do
+      at 9, :overlord
+      at 10, :worker_scout
+      at 15, :spawning_pool
+      at 16, :extractor
+      at(:extractor) { drones[0..2].gather(extractors.last) }
+      at 16, :overlord
+      at 18, :queen
+      at 75.percent(:queen), :roach_warren
+      at 18, :overlord
+      at :queen, :cast => :spawn_larvae
+      7.times { build(:roach).and_wait }
+      at 34, :overlord
+      at 34, :hatchery
     end
+
+#    p game
   end
 end

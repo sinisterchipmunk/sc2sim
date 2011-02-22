@@ -19,6 +19,7 @@ module SC2
   autoload :Errors, "sc2sim/errors"
   autoload :Data, "sc2sim/data"
   autoload :MetaData, "sc2sim/data"
+  autoload :Upgrades, "sc2sim/upgrades"
   
   def self.data
     @data ||= SC2::Data.new
@@ -28,7 +29,12 @@ end
 # eager load the units and structures
 Dir[File.join(File.dirname(__FILE__), "sc2sim/structures/zerg/**/*.rb")].each { |fi| require fi }
 Dir[File.join(File.dirname(__FILE__), "sc2sim/units/zerg/**/*.rb")].each { |fi| require fi }
+Dir[File.join(File.dirname(__FILE__), "sc2sim/upgrades/zerg/**/*.rb")].each { |fi| require fi }
+
 Dir[File.join(File.dirname(__FILE__), "sc2sim/structures/terran/**/*.rb")].each { |fi| require fi }
 Dir[File.join(File.dirname(__FILE__), "sc2sim/units/terran/**/*.rb")].each { |fi| require fi }
+Dir[File.join(File.dirname(__FILE__), "sc2sim/upgrades/terran/**/*.rb")].each { |fi| require fi }
+
 Dir[File.join(File.dirname(__FILE__), "sc2sim/structures/protoss/**/*.rb")].each { |fi| require fi }
 Dir[File.join(File.dirname(__FILE__), "sc2sim/units/protoss/**/*.rb")].each { |fi| require fi }
+Dir[File.join(File.dirname(__FILE__), "sc2sim/upgrades/protoss/**/*.rb")].each { |fi| require fi }

@@ -8,7 +8,7 @@ class SC2::Actions::Spell < SC2::Actions::Base
     @name = name_of_spell
     @options = options
     
-    super(game, options[:incubation] || 0)
+    super(game, options[:incubation] || 0, self)
   end
   
   def trigger!

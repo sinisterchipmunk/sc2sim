@@ -14,13 +14,31 @@ class SC2::BuildOrder
       when Symbol                    then wait_for condition
       else raise ArgumentError, "Condition not understood: #{condition.inspect}"
     end
-    build unit_or_structure_to_build if unit_or_structure_to_build
+
+    case unit_or_structure_to_build
+      when :extractor_trick then perform_extractor_trick
+      when :worker_scout then workers.last.stop_gathering
+      when Hash then
+        if unit_or_structure_to_build.key?(:cast)
+          cast unit_or_structure_to_build[:cast]
+        else raise ArgumentError, "Invalid options"
+        end
+      when NilClass then ; #no-op
+      else build unit_or_structure_to_build
+    end
+
     instance_eval &block if block_given?
+  end
+  
+  def perform_extractor_trick
+    build :extractor
+    build :drone
+    cancel :extractor
   end
   
   def drone_to(qty)
     while supplies.consumed < qty
-      build :drone
+      build worker_type.handle
     end
   end
   
@@ -30,7 +48,7 @@ class SC2::BuildOrder
       if extractor.kind_of?(SC2::Actions::Base)
         @sim.wait_for(:extractor)
       end
-      @sim.drones[(index*3)...((index+1)*3)].gather(extractor)
+      @sim.workers[(index*3)...((index+1)*3)].gather(extractor)
     end
   end
   

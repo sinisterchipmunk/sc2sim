@@ -4,6 +4,15 @@ class SC2::GameObject
   include SC2::MetaData
   @@registry = {}
 
+  def inspect
+    ivars = ""
+    instance_variables.each { |ivar|
+      next if [:"@workers"].include? ivar
+      ivars = "#{ivars} #{ivar}=#{instance_variable_get(ivar).inspect}"
+    }
+    "#<#{self.class.base_name}#{ivars}>"
+  end
+
   def supply_consumed
     0
   end
@@ -41,7 +50,13 @@ class SC2::GameObject
   end
   
   def produce(game, unit_or_structure)
-    game.add_action :Construction, unit_or_structure
+    game.add_action :Construction, unit_or_structure, self
+  end
+  
+  def cancel(action)
+    action.simulator.actions.delete action
+    action.simulator.minerals += action.target.class.mineral_cost * SC2.data.refund_percentage
+    action.simulator.gas      += action.target.class.gas_cost     * SC2.data.refund_percentage
   end
 
   class << self

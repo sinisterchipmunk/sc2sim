@@ -12,6 +12,11 @@ class SC2::Units::Drone < SC2::Units::Worker
     gather(:minerals)
   end
   
+  def cancel(action)
+    action.simulator.workers.push(self)
+    super
+  end
+
   def produce(game, unit_or_structure)
     # Zerg construction consumes the drone that started it
     game.workers.delete(self)
